@@ -16,9 +16,9 @@ class CoffeeSpec extends TestKit(ActorSystem("coffee-system")) with MustMatchers
 
     it("should allow setting and getting of price of coffee") {
       val coffeeMachine = TestActorRef(Props(new CoffeeMachine()))
-      coffeeMachine ! SetCostOfCoffee(5)
+      coffeeMachine ! SetCostOfCoffee(7)
       coffeeMachine ! GetCostOfCoffee
-      expectMsg(5)
+      expectMsg(7)
     }
 
     it("should allow setting and getting of maximum number of coffees") {
@@ -50,9 +50,7 @@ class CoffeeSpec extends TestKit(ActorSystem("coffee-system")) with MustMatchers
       coffeeMachine ! SetNumberOfCoffee(10)
       coffeeMachine ! SubscribeTransitionCallBack(testActor)
 
-      expectMsgPF() {
-        case CurrentState(coffeeMachine, Open) => true
-      }
+      expectMsg(CurrentState(coffeeMachine, Open))
 
       coffeeMachine ! Deposit(5)
 

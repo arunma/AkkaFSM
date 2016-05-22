@@ -53,12 +53,12 @@ class CoffeeMachine extends FSM[MachineState, MachineData] {
       sender ! MachineError("No more coffee")
       goto(PoweredOff)
     }
-    case Event(deposit: Deposit, MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) if (deposit.value + currentTxTotal) >= stateData.costOfCoffee => {
-      goto(ReadyToBuy) using stateData.copy(currentTxTotal = currentTxTotal + deposit.value)
+    case Event(Deposit(value), MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) if (value + currentTxTotal) >= stateData.costOfCoffee => {
+      goto(ReadyToBuy) using stateData.copy(currentTxTotal = currentTxTotal + value)
     }
     //If the total deposit is less than than the price of the coffee, then stay in the current state with the current deposit amount incremented.
-    case Event(deposit: Deposit, MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) => {
-      val cumulativeValue = currentTxTotal + deposit.value
+    case Event(Deposit(value), MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) if (value + currentTxTotal) < stateData.costOfCoffee => {
+      val cumulativeValue = currentTxTotal + value
       logger.debug(s"staying at open with currentTxTotal $cumulativeValue")
       stay using stateData.copy(currentTxTotal = cumulativeValue)
     }
@@ -68,8 +68,8 @@ class CoffeeMachine extends FSM[MachineState, MachineData] {
     case Event(GetCostOfCoffee, _) => sender ! (stateData.costOfCoffee); stay()
   }
 
+  //Ignoring the case when user deposits cash during `ReadyToBuy` state
   when(ReadyToBuy) {
-    case Event(deposit: Deposit, MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) => stay() //Wait for BrewCoffee to be called
     case Event(BrewCoffee, MachineData(currentTxTotal, costOfCoffee, coffeesLeft)) => {
       val balanceToBeDispensed = currentTxTotal - costOfCoffee
       logger.debug(s"Balance is $balanceToBeDispensed")
